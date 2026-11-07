@@ -8,11 +8,15 @@
 All swarm metrics use swarm agents only, rounds from injection onward. Effects are paired
 differences vs k = 0 within the same swarm type and seed (identical task information).
 
-Usage: python analyze_main.py [results/main]
+Usage:
+  python analyze_main.py [results/main]
+  # Figure 1: 0-10 judge scores from the Qwen re-judged sample, everything else from the full data
+  python analyze_main.py results/main --scores-from results/rejudge_qwen3.8-27b/judge2 \
+      --scores-label "Qwen judge" --out figure1.png
 """
 
+import argparse
 import json
-import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -28,6 +32,7 @@ SWARM_METRICS = [
     ("faithfulness", "Faithfulness (0-10)", 10),
     ("agree", "Chat agreement rate", 1),
 ]
+JUDGE_SCORES = ("candor", "legibility", "faithfulness")  # the 0-10 scales that --scores-from replaces
 STYLE = {"aligned": dict(color="#4C78A8", ls="-"), "unaligned": dict(color="#E45756", ls="--")}
 
 
@@ -57,15 +62,9 @@ def mse(xs):
     return xs.mean(), se, len(xs)
 
 
-def main():
-    d = Path(sys.argv[1] if len(sys.argv) > 1 else "results/main")
-    recs, sums = load(d)
-    if not recs:
-        raise SystemExit(f"no episodes in {d}/")
-    cfg = sums[0]["config"]
-    inject, G = cfg["inject_round"], cfg["group_size"]
-
-    # Per-episode means: (swarm_type, k, seed) -> metric -> mean over swarm agents, post-injection.
+def episode_means(recs, inject):
+    """(swarm_type, k, seed) -> metric -> mean over post-injection messages, for swarm agents (E)
+    and newcomers (N)."""
     ep = defaultdict(lambda: defaultdict(list))
     ep_new = defaultdict(lambda: defaultdict(list))
     for r in recs:
@@ -81,6 +80,34 @@ def main():
             ep_new[key]["confesses"].append(float(r["confesses"]))
     E = {k: {m: np.mean(v) for m, v in ms.items()} for k, ms in ep.items()}
     N = {k: {m: np.mean(v) for m, v in ms.items()} for k, ms in ep_new.items()}
+    return E, N
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("dir", nargs="?", default="results/main")
+    p.add_argument("--scores-from", default=None,
+                   help="take the 0-10 judge scores (candor, legibility, faithfulness) from this re-judged dir")
+    p.add_argument("--scores-label", default="second judge")
+    p.add_argument("--out", default="main_results.png")
+    a = p.parse_args()
+    d = Path(a.dir)
+    recs, sums = load(d)
+    if not recs:
+        raise SystemExit(f"no episodes in {d}/")
+    cfg = sums[0]["config"]
+    inject, G = cfg["inject_round"], cfg["group_size"]
+
+    E, N = episode_means(recs, inject)
+    if a.scores_from:
+        E2, N2 = episode_means(load(Path(a.scores_from))[0], inject)
+        for key in E:
+            for m in JUDGE_SCORES:
+                E[key][m] = E2.get(key, {}).get(m, np.nan)
+        for key in N:
+            N[key]["candor"] = N2.get(key, {}).get("candor", np.nan)
+        print(f"NOTE: candor/legibility/faithfulness (swarm + newcomer) from {a.scores_from} ({a.scores_label}); "
+              f"all other metrics from {d}")
 
     cells = sorted({(s, k) for s, k, _ in E}, key=lambda c: (c[0] != "aligned", c[1]))
     seeds = lambda s, k: sorted(sd for (ss, kk, sd) in E if (ss, kk) == (s, k))
@@ -120,9 +147,9 @@ def main():
         drops = {}
         for s in ["aligned", "unaligned"]:
             drops[s] = [E[(s, 1, x)][m] - E[(s, 0, x)][m] for x in seeds(s, 1) if (s, 0, x) in E]
-        a, u = mse(drops["aligned"]), mse(drops["unaligned"])
-        print(f"  {m:22s} aligned {a[0]:+.2f}±{a[1]:.2f}   unaligned {u[0]:+.2f}±{u[1]:.2f}   "
-              f"difference {a[0] - u[0]:+.2f} (SE {np.hypot(a[1], u[1]):.2f})")
+        al, un = mse(drops["aligned"]), mse(drops["unaligned"])
+        print(f"  {m:22s} aligned {al[0]:+.2f}±{al[1]:.2f}   unaligned {un[0]:+.2f}±{un[1]:.2f}   "
+              f"difference {al[0] - un[0]:+.2f} (SE {np.hypot(al[1], un[1]):.2f})")
 
     # ---- Figure ----
     fig, axes = plt.subplots(2, 4, figsize=(16, 7.5))
@@ -134,7 +161,7 @@ def main():
                 continue
             st = np.array([mse([E[(s, k, x)].get(m, np.nan) for x in seeds(s, k)])[:2] for k in ks])
             ax.errorbar(np.array(ks) / G * 100, st[:, 0], yerr=st[:, 1], marker="o", capsize=3, label=s, **STYLE[s])
-        ax.set_title(label)
+        ax.set_title(f"{label} [{a.scores_label}]" if a.scores_from and m in JUDGE_SCORES else label)
         ax.set_ylim(-0.03 * top, top * 1.05)
         ax.set_xlabel("Advocates (% of group)")
         ax.grid(alpha=0.3)
@@ -150,7 +177,8 @@ def main():
         x = np.array(ks) / G * 100
         ax.errorbar(x, [c[0] for c in dc], yerr=[c[1] for c in dc], marker="o", capsize=3, color="#4C78A8",
                     label="candor change vs k=0")
-        ax.set_ylabel("Candor change (points)", color="#4C78A8")
+        cl = f"Candor change (points){' [' + a.scores_label + ']' if a.scores_from else ''}"
+        ax.set_ylabel(cl, color="#4C78A8")
         ax2 = ax.twinx()
         ax2.errorbar(x, [w[0] for w in wb], yerr=[w[1] for w in wb], marker="s", capsize=3, color="#F58518",
                      label="whistleblowing rate")
@@ -161,7 +189,7 @@ def main():
         ax.set_xlabel("Advocates (% of group)")
         ax.grid(alpha=0.3)
     fig.tight_layout()
-    out = d / "main_results.png"
+    out = d / a.out
     fig.savefig(out, dpi=150)
     print(f"\nsaved {out}")
 
