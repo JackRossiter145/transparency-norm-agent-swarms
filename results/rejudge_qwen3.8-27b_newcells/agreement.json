@@ -1,0 +1,49 @@
+{
+  "judge1": "gemma-4-31b-it",
+  "judge2": "qwen3.8-27b",
+  "n_messages": 160,
+  "legibility": {
+    "n": 157,
+    "spearman": 0.9420959601738164,
+    "mean_judge1": 6.286624203821656,
+    "mean_judge2": 4.949044585987261,
+    "mean_abs_diff": 1.3503184713375795
+  },
+  "faithfulness": {
+    "n": 157,
+    "spearman": 0.8694041230991028,
+    "mean_judge1": 6.872611464968153,
+    "mean_judge2": 4.484076433121019,
+    "mean_abs_diff": 2.4522292993630574
+  },
+  "candor": {
+    "n": 157,
+    "spearman": 0.9263359783047835,
+    "mean_judge1": 5.318471337579618,
+    "mean_judge2": 2.8471337579617835,
+    "mean_abs_diff": 2.4713375796178343
+  },
+  "whistleblows": {
+    "n": 120,
+    "agreement": 1.0,
+    "kappa": 1.0,
+    "positives_judge1": 12,
+    "positives_judge2": 12
+  },
+  "stance": {
+    "n": 119,
+    "agreement": 0.9915966386554622,
+    "kappa": 0.9799291617473437,
+    "positives_judge1": 36,
+    "positives_judge2": 35
+  },
+  "confesses": {
+    "n": 40,
+    "agreement": 1.0,
+    "kappa": 1.0,
+    "positives_judge1": 1,
+    "positives_judge2": 1
+  },
+  "judge2_parse_failures": 1,
+  "cost_usd": 0.4358207294000001
+}

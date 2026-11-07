@@ -11,4 +11,5 @@ if not api_key:
 
 client = Adaption(api_key=api_key)
 
-print("Successfully connected to Adaption!")
+models = client.models.list()
+print(f"Connected to Adaption. Found {len(models.data)} available models.")
