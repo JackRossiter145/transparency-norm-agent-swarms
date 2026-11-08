@@ -11,8 +11,12 @@ Per episode it samples a fixed number of post-injection swarm and newcomer messa
   <out>/judge1_subsample/   same messages, original (Gemma) judge values -> like-for-like baseline
   <out>/agreement.json      inter-judge agreement statistics (also printed)
 
-Usage:
-  python rejudge.py --judge-model qwen3.8-27b
+Usage (exactly as used for the paper; see README):
+  python rejudge.py --judge-model qwen3.8-27b --seeds 0-9 \
+      --cells aligned_k0,aligned_k1,aligned_k2,aligned_k3,aligned_k5,unaligned_k0,unaligned_k1,unaligned_k3
+  python rejudge.py --judge-model qwen3.8-27b --seeds 0-9 --cells aligned_k7,unaligned_k5 \
+      --out results/rejudge_qwen3.8-27b_newcells
+  (then copy the second run's judge2/ and judge1_subsample/ files into results/rejudge_qwen3.8-27b/)
   python analyze_main.py results/rejudge_qwen3.8-27b/judge2
   python analyze_main.py results/rejudge_qwen3.8-27b/judge1_subsample
 """
@@ -25,6 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
+from analyze_main import parse_seeds
 from swarm import scoring
 from swarm.llm import LLM
 from swarm.scoring import judge_confession, judge_report, judge_stance, judge_whistleblow
@@ -92,9 +97,22 @@ def cohen_kappa(a, b):
     return float("nan") if pe == 1 else float((po - pe) / (1 - pe))
 
 
+def select_files(src: Path, seeds: set[int], cells: set[str] | None) -> list[Path]:
+    """Episode files in src for the given seeds and cells (cell = filename prefix, e.g. 'aligned_k1').
+    Sorted, so the per-message sampling below is reproducible for a given file set."""
+    out = []
+    for f in sorted(src.glob("*.jsonl")):
+        cell, _channel, seed = f.stem.rsplit("_", 2)
+        if int(seed[1:]) in seeds and (cells is None or cell in cells):
+            out.append(f)
+    return out
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--src", default="results/main")
+    p.add_argument("--seeds", default="0-9", help="episode seeds to include, e.g. 0-9")
+    p.add_argument("--cells", default="", help="comma-separated cells, e.g. aligned_k0,unaligned_k1 (default: all)")
     p.add_argument("--judge-model", required=True)
     p.add_argument("--swarm-per-episode", type=int, default=6)
     p.add_argument("--newcomer-per-episode", type=int, default=2)
@@ -112,7 +130,8 @@ def main():
     rng = random.Random(a.seed)
 
     episodes, tasks = [], []
-    for f in sorted(src.glob("*.jsonl")):
+    files = select_files(src, parse_seeds(a.seeds), set(a.cells.split(",")) if a.cells else None)
+    for f in files:
         lines = [json.loads(l) for l in f.open()]
         recs, summ = [l for l in lines if l["type"] == "message"], lines[-1]
         inj = summ["config"]["inject_round"]

@@ -12,7 +12,7 @@ Usage:
   python analyze_main.py [results/main]
   # Figure 1: 0-10 judge scores from the Qwen re-judged sample, everything else from the full data
   python analyze_main.py results/main --scores-from results/rejudge_qwen3.8-27b/judge2 \
-      --scores-label "Qwen judge" --out figure1.png
+      --scores-label "Qwen judge" --out main_results_qwen.png
 """
 
 import argparse

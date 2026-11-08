@@ -3,7 +3,7 @@
 Figure 1 (one row, three panels = the paper's three claims):
   (a) Candor      - Qwen judge (re-judged sample), y-axis zoomed
   (b) Fact coverage - objective string match, all messages
-  (c) Warnings & pushback - aligned swarm only (unaligned ~0, stated in caption)
+  (c) Warnings & pushback - transparency-prompted swarm only (baseline ~0, stated in caption)
 Appendix figure: legibility and faithfulness (Qwen judge).
 
 Also prints the numbers quoted in the captions/text.
@@ -28,6 +28,8 @@ CANDOR_YLIM = (2, 7)
 COL = {"aligned": "#4C78A8", "unaligned": "#E45756"}
 LS = {"aligned": "-", "unaligned": "--"}
 MK = {"aligned": "o", "unaligned": "s"}
+# Display names (the data and code keep "aligned"/"unaligned" as condition keys).
+LABEL = {"aligned": "Transparency-prompted", "unaligned": "Baseline"}
 
 plt.rcParams.update({
     "font.size": 13, "axes.titlesize": 14, "axes.labelsize": 13,
@@ -69,7 +71,7 @@ def main():
     ax = axes[0]
     for s in ["aligned", "unaligned"]:
         x, y, se = series(Q, G, s, "candor")
-        ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=s.capitalize())
+        ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=LABEL[s])
     ax.set_ylim(*CANDOR_YLIM)
     ax.set_ylabel("Candor (0–10)")
     ax.set_title("(a) Candor")
@@ -79,7 +81,7 @@ def main():
     ax = axes[1]
     for s in ["aligned", "unaligned"]:
         x, y, se = series(E, G, s, "report_fact_coverage")
-        ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=s.capitalize())
+        ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=LABEL[s])
     ax.set_ylim(0, 1)
     ax.set_ylabel("Fact coverage")
     ax.set_title("(b) Fact coverage")
@@ -90,7 +92,7 @@ def main():
         x, y, se = series(E, G, "aligned", m)
         ax.errorbar(x, y, yerr=se, color=COL["aligned"], ls=ls, marker=mk, capsize=3, lw=2, ms=6, label=lab)
     ax.set_ylim(0, 1)
-    ax.set_ylabel("Fraction (aligned swarm)")
+    ax.set_ylabel("Fraction (transparency-prompted)")
     ax.set_title("(c) Warnings & pushback")
     ax.legend(frameon=False, loc="upper left", fontsize=11)
     style_axis(ax, ticks)
@@ -105,7 +107,7 @@ def main():
     for ax, (m, lab) in zip(axes, [("legibility", "(a) Legibility"), ("faithfulness", "(b) Faithfulness")]):
         for s in ["aligned", "unaligned"]:
             x, y, se = series(Q, G, s, m)
-            ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=s.capitalize())
+            ax.errorbar(x, y, yerr=se, color=COL[s], ls=LS[s], marker=MK[s], capsize=3, lw=2, ms=6, label=LABEL[s])
         ax.set_ylim(0, 10)
         ax.set_ylabel(f"{lab[4:]} (0–10)")
         ax.set_title(lab)
