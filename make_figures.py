@@ -8,15 +8,18 @@ Appendix figure: legibility and faithfulness (Qwen judge).
 
 Also prints the numbers quoted in the captions/text.
 
-Usage: python make_figures.py
+Usage:
+  python make_figures.py                      # paper figures, seeds 0-9, written to results/main
+  python make_figures.py --seeds 10-19 --out-dir <dir>
 """
 
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from analyze_main import episode_means, load, mse
+from analyze_main import DEFAULT_SEEDS, episode_means, load, mse, parse_seeds
 
 MAIN = Path("results/main")
 QWEN = Path("results/rejudge_qwen3.8-27b/judge2")
@@ -46,11 +49,19 @@ def style_axis(ax, ticks):
 
 
 def main():
-    recs, sums = load(MAIN)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seeds", default=DEFAULT_SEEDS, help="seeds to include, e.g. 0-9 (default), 10-19")
+    ap.add_argument("--out-dir", default=str(MAIN), help="where to write the figures (default results/main)")
+    args = ap.parse_args()
+    seeds = parse_seeds(args.seeds)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"seeds: {args.seeds}")
+    recs, sums = load(MAIN, seeds)
     cfg = sums[0]["config"]
     inject, G = cfg["inject_round"], cfg["group_size"]
     E, _ = episode_means(recs, inject)                      # full data: facts, whistleblowing, pushback
-    Q, _ = episode_means(load(QWEN)[0], inject)             # Qwen sample: 0-10 judge scores
+    Q, _ = episode_means(load(QWEN, seeds)[0], inject)             # Qwen sample: 0-10 judge scores
     ticks = sorted({k / G * 100 for _, k, _ in E})
 
     # ---------------- Figure 1 ----------------
@@ -85,9 +96,9 @@ def main():
     style_axis(ax, ticks)
 
     fig.tight_layout()
-    fig.savefig(MAIN / "figure1.png", dpi=200)
-    fig.savefig(MAIN / "figure1.pdf")
-    print(f"saved {MAIN}/figure1.png and .pdf")
+    fig.savefig(out_dir / "figure1.png", dpi=200)
+    fig.savefig(out_dir / "figure1.pdf")
+    print(f"saved {out_dir}/figure1.png and .pdf")
 
     # ---------------- Appendix figure ----------------
     fig, axes = plt.subplots(1, 2, figsize=(7.5, 3.6))
@@ -101,9 +112,9 @@ def main():
         style_axis(ax, ticks)
     axes[0].legend(title="Swarm", frameon=False, loc="lower left", fontsize=11, title_fontsize=11)
     fig.tight_layout()
-    fig.savefig(MAIN / "figure_appendix_legibility_faithfulness.png", dpi=200)
-    fig.savefig(MAIN / "figure_appendix_legibility_faithfulness.pdf")
-    print(f"saved {MAIN}/figure_appendix_legibility_faithfulness.png and .pdf")
+    fig.savefig(out_dir / "figure_appendix_legibility_faithfulness.png", dpi=200)
+    fig.savefig(out_dir / "figure_appendix_legibility_faithfulness.pdf")
+    print(f"saved {out_dir}/figure_appendix_legibility_faithfulness.png and .pdf")
 
     # ---------------- Numbers for the caption / text ----------------
     post = [r for r in recs if r["type"] == "message" and r["role"] == "swarm" and r["round"] >= inject]
@@ -121,7 +132,7 @@ def main():
             v = [r for r in post if r["swarm_type"] == s and r["n_advocates"] == k and r.get("stance") is not None]
             rates.append(f"k={k}: {sum(r['stance'] == 'agree' for r in v)}/{len(v)}")
         print(f"Chat agreement with advocates, {s}: " + ", ".join(rates))
-    qs = [r for r in load(QWEN)[0] if r["role"] == "swarm" and r["round"] >= inject and r.get("candor") is not None]
+    qs = [r for r in load(QWEN, seeds)[0] if r["role"] == "swarm" and r["round"] >= inject and r.get("candor") is not None]
     lo, hi = min(r["candor"] for r in qs), max(r["candor"] for r in qs)
     print(f"Qwen candor sample: {len(qs)} swarm messages (range of individual scores {lo:.0f}-{hi:.0f}; "
           f"panel (a) y-axis zoomed to {CANDOR_YLIM[0]}-{CANDOR_YLIM[1]})")

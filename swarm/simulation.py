@@ -140,6 +140,8 @@ def run_episode(llm: LLM, cfg: Config, seed: int) -> dict:
         "swarm_persona": cfg.swarm_persona,
         "n_advocates": k,
         "advocate_share": k / cfg.group_size,
+        "group_size": cfg.group_size,
+        "n_swarm": n_swarm,
         "channel": cfg.channel,
         "condition": f"{cfg.swarm_type}_k{k}",
         "seed": seed,

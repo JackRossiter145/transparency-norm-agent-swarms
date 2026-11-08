@@ -1,0 +1,81 @@
+EXPLORATORY FOLLOW-UPS (not pre-registered). Swarm agents, rounds 3-8. Effects are paired by seed: mean ± SE [seeds with negative difference / n].
+
+=== F1 (existing logs): pushback vs fact coverage, aligned swarm, group 10, k in (1, 2, 3, 5, 7), seeds 0-9 ===
+(a) Episode level, n = 50 episodes
+    pooled:       Pearson r = +0.52 (perm p = 0.000);  Spearman rho = +0.62 (perm p = 0.000)
+    within cell:  Pearson r = +0.45 (permutation within cell, p = 0.003)  [removes between-cell differences in advocate count]
+      k=1: n=10  mean pushback 0.08  mean coverage 0.68  r = +0.61
+      k=2: n=10  mean pushback 0.11  mean coverage 0.65  r = +0.69
+      k=3: n=10  mean pushback 0.22  mean coverage 0.70  r = +0.61
+      k=5: n=10  mean pushback 0.43  mean coverage 0.79  r = +0.22
+      k=7: n=10  mean pushback 0.49  mean coverage 0.71  r = +0.37
+(b) Agent-round level: 109/320 swarm agents pushed back at least once
+    raw mean coverage:  after first pushback (later rounds) 0.723 (n=397) | incl. pushback round 0.747 (n=506) | pushers before pushing 0.932 (n=148) | never pushed back 0.646 (n=1266)
+    after (later rounds)          minus never, round-matched        : +0.195  [95% CI +0.137, +0.250]  (n after=397)
+    after (later rounds)          minus never, cell x round-matched : +0.163  [95% CI +0.064, +0.264]  (n after=397)
+    after (incl. pushback round)  minus never, round-matched        : +0.176  [95% CI +0.123, +0.226]  (n after=506)
+    after (incl. pushback round)  minus never, cell x round-matched : +0.151  [95% CI +0.063, +0.238]  (n after=506)
+    (Coverage falls over rounds in every condition, and post-pushback rounds are later rounds, so the round-matched comparisons are the meaningful ones.)
+(c) Before/after check
+    BEFORE first pushback minus never, cell x round-matched: +0.036  [95% CI -0.034, +0.109]  (n before=148 agent-rounds)
+    Change from before to after first pushback (pushers with >=1 round on each side: n=109):
+      pushers:                                    -0.238  [95% CI -0.285, -0.191]
+      never-pushers, same cell, same rounds:      -0.361  [95% CI -0.482, -0.261]
+      difference-in-differences (pushers - never): +0.123  [95% CI +0.016, +0.241]
+    (Pushback round itself excluded from both sides. CIs: bootstrap over episodes, 2000 resamples.)
+
+=== F1 replication (new seeds): pushback vs fact coverage, aligned swarm, group 10, k in (1, 2, 5), seeds 10-19 ===
+(a) Episode level, n = 30 episodes
+    pooled:       Pearson r = +0.49 (perm p = 0.007);  Spearman rho = +0.47 (perm p = 0.010)
+    within cell:  Pearson r = +0.49 (permutation within cell, p = 0.009)  [removes between-cell differences in advocate count]
+      k=1: n=10  mean pushback 0.21  mean coverage 0.66  r = +0.70
+      k=2: n=10  mean pushback 0.34  mean coverage 0.61  r = +0.59
+      k=5: n=10  mean pushback 0.46  mean coverage 0.72  r = +0.32
+(b) Agent-round level: 103/220 swarm agents pushed back at least once
+    raw mean coverage:  after first pushback (later rounds) 0.670 (n=361) | incl. pushback round 0.694 (n=464) | pushers before pushing 0.831 (n=154) | never pushed back 0.587 (n=702)
+    after (later rounds)          minus never, round-matched        : +0.218  [95% CI +0.142, +0.294]  (n after=361)
+    after (later rounds)          minus never, cell x round-matched : +0.219  [95% CI +0.121, +0.307]  (n after=361)
+    after (incl. pushback round)  minus never, round-matched        : +0.202  [95% CI +0.122, +0.282]  (n after=464)
+    after (incl. pushback round)  minus never, cell x round-matched : +0.209  [95% CI +0.107, +0.299]  (n after=464)
+    (Coverage falls over rounds in every condition, and post-pushback rounds are later rounds, so the round-matched comparisons are the meaningful ones.)
+(c) Before/after check
+    BEFORE first pushback minus never, cell x round-matched: -0.038  [95% CI -0.119, +0.028]  (n before=154 agent-rounds)
+    Change from before to after first pushback (pushers with >=1 round on each side: n=103):
+      pushers:                                    -0.227  [95% CI -0.295, -0.156]
+      never-pushers, same cell, same rounds:      -0.470  [95% CI -0.540, -0.385]
+      difference-in-differences (pushers - never): +0.243  [95% CI +0.144, +0.338]
+    (Pushback round itself excluded from both sides. CIs: bootstrap over episodes, 2000 resamples.)
+
+=== F2: REPLICATION on new seeds 10-19 — aligned paired effects vs k=0 (group 10) ===
+  (The paper's main results use seeds 0-9 only; seeds 10-19 are reported separately here, not pooled.)
+  seeds 0-9 (original, as in the paper)
+    k=1: facts -0.117±0.031 [9/10<0] | candor[Gemma] -0.346±0.176 [7/10<0] | warn +0.031±0.022 [0/10<0] | push +0.080±0.063 [0/10<0]
+    k=2: facts -0.143±0.039 [9/10<0] | candor[Gemma] -0.287±0.208 [5/10<0] | warn +0.033±0.033 [0/10<0] | push +0.106±0.076 [0/10<0]
+    k=5: facts -0.006±0.041 [4/10<0] | candor[Gemma] +0.245±0.101 [2/10<0] | warn +0.217±0.057 [0/10<0] | push +0.434±0.101 [0/10<0]
+  seeds 10-19 (replication)
+    k=1: facts -0.102±0.039 [8/10<0] | candor[Gemma] -0.247±0.119 [7/10<0] | warn +0.101±0.053 [0/10<0] | push +0.213±0.109 [0/10<0]
+    k=2: facts -0.147±0.047 [9/10<0] | candor[Gemma] -0.341±0.194 [7/10<0] | warn +0.131±0.058 [0/10<0] | push +0.342±0.119 [0/10<0]
+    k=5: facts -0.041±0.051 [5/10<0] | candor[Gemma] -0.049±0.233 [4/10<0] | warn +0.203±0.065 [0/10<0] | push +0.457±0.105 [0/10<0]
+  Cell means of swarm fact coverage, original and replication seeds reported separately:
+    k=0 seeds 0-9  : 0.793 ± 0.023 (n=10)
+    k=0 seeds 10-19: 0.757 ± 0.024 (n=10)
+    k=1 seeds 0-9  : 0.676 ± 0.027 (n=10)
+    k=1 seeds 10-19: 0.656 ± 0.028 (n=10)
+    k=2 seeds 0-9  : 0.650 ± 0.027 (n=10)
+    k=2 seeds 10-19: 0.610 ± 0.044 (n=10)
+    k=3 seeds 0-9  : 0.700 ± 0.028 (n=10)
+    k=5 seeds 0-9  : 0.787 ± 0.034 (n=10)
+    k=5 seeds 10-19: 0.717 ± 0.052 (n=10)
+    k=7 seeds 0-9  : 0.706 ± 0.038 (n=10)
+
+=== F3: more pressure with allies held fixed — 9 aligned + 5 advocates (group 14) vs 9 aligned + 1 advocate (group 10) ===
+  all seeds 0-9
+    9 aligned + 1 advocate  (g10 k1) vs control: facts -0.117±0.031 [9/10<0] | candor[Gemma] -0.346±0.176 [7/10<0] | warn +0.031±0.022 [0/10<0] | push +0.080±0.063 [0/10<0]
+    9 aligned + 5 advocates (g14 k5) vs control: facts -0.113±0.031 [10/10<0] | candor[Gemma] +0.152±0.152 [3/10<0] | warn +0.135±0.063 [0/10<0] | push +0.450±0.112 [0/10<0]
+    5 aligned + 5 advocates (g10 k5) vs control: facts -0.006±0.041 [4/10<0] | candor[Gemma] +0.245±0.101 [2/10<0] | warn +0.217±0.057 [0/10<0] | push +0.434±0.101 [0/10<0]
+    direct: g14 k5 minus g10 k1:          facts +0.004±0.048 [3/10<0] | candor[Gemma] +0.498±0.201 [2/10<0] | warn +0.103±0.069 [2/10<0] | push +0.370±0.151 [1/10<0]
+  excluding seed 5 (different facts at group 14)
+    9 aligned + 1 advocate  (g10 k1) vs control: facts -0.113±0.035 [8/9<0] | candor[Gemma] -0.300±0.190 [6/9<0] | warn +0.035±0.024 [0/9<0] | push +0.088±0.070 [0/9<0]
+    9 aligned + 5 advocates (g14 k5) vs control: facts -0.115±0.035 [9/9<0] | candor[Gemma] +0.161±0.170 [3/9<0] | warn +0.099±0.058 [0/9<0] | push +0.407±0.116 [0/9<0]
+    5 aligned + 5 advocates (g10 k5) vs control: facts +0.017±0.038 [3/9<0] | candor[Gemma] +0.273±0.108 [1/9<0] | warn +0.241±0.057 [0/9<0] | push +0.483±0.100 [0/9<0]
+    direct: g14 k5 minus g10 k1:          facts -0.002±0.053 [3/9<0] | candor[Gemma] +0.461±0.221 [2/9<0] | warn +0.064±0.063 [2/9<0] | push +0.319±0.159 [1/9<0]

@@ -9,6 +9,9 @@ Quick smoke test:
 
 Custom grid (cross product of --swarm and --advocates):
     python run_experiment.py --swarm aligned --advocates 0,1 --channel shared --seeds 5 --out results/shared
+
+Variable group size (swarm = group size - advocates; filenames get a _g<size> tag when size != 10):
+    python run_experiment.py --swarm aligned --advocates 5 --group-size 14 --out results/followups/g14
 """
 
 import argparse
@@ -74,7 +77,8 @@ def main():
     for seed in range(a.seed_offset, a.seed_offset + a.seeds):
         for swarm, k in cells:
             cfg = replace(base, swarm_persona=SWARM_PERSONA[swarm], n_advocates=k)
-            path = out / f"{swarm}_k{k}_{a.channel}_s{seed}.jsonl"
+            g = "" if a.group_size == 10 else f"_g{a.group_size}"  # default-size names unchanged
+            path = out / f"{swarm}{g}_k{k}_{a.channel}_s{seed}.jsonl"
             if not path.exists():
                 jobs.append((cfg, seed, path))
 

@@ -36,11 +36,26 @@ JUDGE_SCORES = ("candor", "legibility", "faithfulness")  # the 0-10 scales that 
 STYLE = {"aligned": dict(color="#4C78A8", ls="-"), "unaligned": dict(color="#E45756", ls="--")}
 
 
-def load(d: Path):
+DEFAULT_SEEDS = "0-9"  # the paper's main results use the original 10 seeds; 10-19 are a follow-up replication
+
+
+def parse_seeds(spec: str) -> set[int]:
+    """'0-9' -> {0..9};  '0-4,10-12' -> {0..4, 10..12};  '3' -> {3}."""
+    out = set()
+    for part in spec.split(","):
+        lo, _, hi = part.strip().partition("-")
+        out |= set(range(int(lo), int(hi or lo) + 1))
+    return out
+
+
+def load(d: Path, seeds: set[int] | None = None):
+    """Message records and episode summaries in d, optionally restricted to the given seeds."""
     recs, sums = [], []
     for f in sorted(d.glob("*.jsonl")):
         for line in f.open():
             r = json.loads(line)
+            if seeds is not None and r["seed"] not in seeds:
+                continue
             (sums if r["type"] == "summary" else recs).append(r)
     return recs, sums
 
@@ -89,10 +104,13 @@ def main():
     p.add_argument("--scores-from", default=None,
                    help="take the 0-10 judge scores (candor, legibility, faithfulness) from this re-judged dir")
     p.add_argument("--scores-label", default="second judge")
-    p.add_argument("--out", default="main_results.png")
+    p.add_argument("--out", default="main_results.png", help="filename (relative to dir) or absolute path")
+    p.add_argument("--seeds", default=DEFAULT_SEEDS, help="seeds to include, e.g. 0-9 (default), 10-19, 0-19")
     a = p.parse_args()
     d = Path(a.dir)
-    recs, sums = load(d)
+    seeds = parse_seeds(a.seeds)
+    recs, sums = load(d, seeds)
+    print(f"seeds: {a.seeds}")
     if not recs:
         raise SystemExit(f"no episodes in {d}/")
     cfg = sums[0]["config"]
@@ -100,7 +118,7 @@ def main():
 
     E, N = episode_means(recs, inject)
     if a.scores_from:
-        E2, N2 = episode_means(load(Path(a.scores_from))[0], inject)
+        E2, N2 = episode_means(load(Path(a.scores_from), seeds)[0], inject)
         for key in E:
             for m in JUDGE_SCORES:
                 E[key][m] = E2.get(key, {}).get(m, np.nan)
