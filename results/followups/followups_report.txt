@@ -79,3 +79,43 @@ EXPLORATORY FOLLOW-UPS (not pre-registered). Swarm agents, rounds 3-8. Effects a
     9 aligned + 5 advocates (g14 k5) vs control: facts -0.115±0.035 [9/9<0] | candor[Gemma] +0.161±0.170 [3/9<0] | warn +0.099±0.058 [0/9<0] | push +0.407±0.116 [0/9<0]
     5 aligned + 5 advocates (g10 k5) vs control: facts +0.017±0.038 [3/9<0] | candor[Gemma] +0.273±0.108 [1/9<0] | warn +0.241±0.057 [0/9<0] | push +0.483±0.100 [0/9<0]
     direct: g14 k5 minus g10 k1:          facts -0.002±0.053 [3/9<0] | candor[Gemma] +0.461±0.221 [2/9<0] | warn +0.064±0.063 [2/9<0] | push +0.319±0.159 [1/9<0]
+
+=== F4: empty-report sensitivity (seeds 0-9, as in the paper) ===
+  Empty swarm reports, rounds 3-8 (whole reply empty + reply without a report section):
+    seeds 0-9   aligned   k=0:   0/540 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 0-9   aligned   k=1:   7/540 (1.3%)  [whole reply empty 7, no report section 0]
+    seeds 0-9   aligned   k=2:   0/480 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 0-9   aligned   k=3:  10/420 (2.4%)  [whole reply empty 10, no report section 0]
+    seeds 0-9   aligned   k=5:   0/300 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 0-9   aligned   k=7:   7/180 (3.9%)  [whole reply empty 7, no report section 0]
+    seeds 0-9   unaligned k=0:   0/540 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 0-9   unaligned k=1:   1/540 (0.2%)  [whole reply empty 0, no report section 1]
+    seeds 0-9   unaligned k=3:   0/420 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 0-9   unaligned k=5:   8/300 (2.7%)  [whole reply empty 8, no report section 0]
+    seeds 10-19 aligned   k=0:   0/540 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 10-19 aligned   k=1:   0/540 (0.0%)  [whole reply empty 0, no report section 0]
+    seeds 10-19 aligned   k=2:   6/480 (1.2%)  [whole reply empty 0, no report section 6]
+    seeds 10-19 aligned   k=5:   9/300 (3.0%)  [whole reply empty 0, no report section 9]
+  Excluded swarm messages: as reported: 0, drop whole-empty replies: 32, drop all empty reports: 33
+  Paired effect vs k=0 (mean ± SE): facts = fact coverage, all messages; candor = Qwen judge (Figure 1a)
+    aligned   k=1: as reported: facts -0.117±0.031 candor -0.75±0.32 | drop whole-empty replies: facts -0.109±0.029 candor -0.68±0.27 | drop all empty reports: facts -0.109±0.029 candor -0.68±0.27
+    aligned   k=2: as reported: facts -0.143±0.039 candor -0.94±0.29 | drop whole-empty replies: facts -0.143±0.039 candor -0.94±0.29 | drop all empty reports: facts -0.143±0.039 candor -0.94±0.29
+    aligned   k=3: as reported: facts -0.093±0.035 candor -0.60±0.34 | drop whole-empty replies: facts -0.072±0.040 candor -0.52±0.32 | drop all empty reports: facts -0.072±0.040 candor -0.52±0.32
+    aligned   k=5: as reported: facts -0.006±0.041 candor -0.70±0.30 | drop whole-empty replies: facts -0.006±0.041 candor -0.70±0.30 | drop all empty reports: facts -0.006±0.041 candor -0.70±0.30
+    aligned   k=7: as reported: facts -0.087±0.055 candor -0.66±0.45 | drop whole-empty replies: facts -0.060±0.046 candor -0.51±0.45 | drop all empty reports: facts -0.060±0.046 candor -0.51±0.45
+    unaligned k=1: as reported: facts -0.209±0.030 candor -1.30±0.32 | drop whole-empty replies: facts -0.209±0.030 candor -1.30±0.32 | drop all empty reports: facts -0.209±0.029 candor -1.30±0.32
+    unaligned k=3: as reported: facts -0.320±0.025 candor -1.30±0.33 | drop whole-empty replies: facts -0.320±0.025 candor -1.30±0.33 | drop all empty reports: facts -0.320±0.025 candor -1.30±0.33
+    unaligned k=5: as reported: facts -0.386±0.046 candor -1.73±0.38 | drop whole-empty replies: facts -0.380±0.045 candor -1.71±0.37 | drop all empty reports: facts -0.380±0.045 candor -1.71±0.37
+  H1 (drop at k=1, aligned minus unaligned):
+    as reported               facts         +0.093 (SE 0.043)
+    as reported               candor[Qwen]  +0.550 (SE 0.450)
+    drop whole-empty replies  facts         +0.100 (SE 0.041)
+    drop whole-empty replies  candor[Qwen]  +0.617 (SE 0.417)
+    drop all empty reports    facts         +0.100 (SE 0.041)
+    drop all empty reports    candor[Qwen]  +0.617 (SE 0.417)
+  Aligned warning / pushback rates (per-episode mean):
+    k=1: as reported: warn 0.031 push 0.080 | drop whole-empty replies: warn 0.031 push 0.080 | drop all empty reports: warn 0.031 push 0.080
+    k=2: as reported: warn 0.033 push 0.106 | drop whole-empty replies: warn 0.033 push 0.106 | drop all empty reports: warn 0.033 push 0.106
+    k=3: as reported: warn 0.083 push 0.217 | drop whole-empty replies: warn 0.087 push 0.229 | drop all empty reports: warn 0.087 push 0.229
+    k=5: as reported: warn 0.217 push 0.434 | drop whole-empty replies: warn 0.217 push 0.434 | drop all empty reports: warn 0.217 push 0.434
+    k=7: as reported: warn 0.191 push 0.493 | drop whole-empty replies: warn 0.194 push 0.509 | drop all empty reports: warn 0.194 push 0.509

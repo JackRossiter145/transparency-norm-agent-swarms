@@ -10,6 +10,9 @@ aligned-swarm reports more than heavy pressure?
       9 aligned + 1 advocate cell (aligned k=1, group of 10). Both are paired by seed against
       the same control (aligned k=0: 9 aligned + 1 neutral newcomer). For 9 of 10 seeds the 9
       aligned agents receive identical facts in both group sizes (seed 5 differs).
+  F4  Empty-report sensitivity (seeds 0-9, the paper's main results): ~0.8% of swarm reports are
+      empty (whole reply empty, or no overseer-report section), all in advocate cells. Main
+      effects are recomputed with them excluded.
 
 Swarm agents only, rounds from injection onward. Read-only on existing result files; writes
 results/followups/followups_report.txt.
@@ -25,7 +28,10 @@ from pathlib import Path
 
 import numpy as np
 
+import analyze_main as am
+
 MAIN, G14 = Path("results/main"), Path("results/followups/g14")
+QWEN = Path("results/rejudge_qwen3.8-27b/judge2")
 OUT = Path("results/followups/followups_report.txt")
 SEED_MISMATCH_G14 = {5}  # seeds whose aligned-agent facts differ between group sizes 10 and 14
 
@@ -298,6 +304,67 @@ def f3(eps, say):
         say(f"    direct: g14 k5 minus g10 k1:          " + " | ".join(parts))
 
 
+# ---------------------------------------------------------------- F4
+def f4(say):
+    say("\n=== F4: empty-report sensitivity (seeds 0-9, as in the paper) ===")
+    inject = 2
+    whole_empty = lambda r: r["report_words"] == 0 and not r["team_message"].strip()
+    any_empty = lambda r: r["report_words"] == 0
+
+    # Where empty reports occur (both seed sets, reported separately)
+    allrecs, _ = am.load(MAIN, am.parse_seeds("0-19"))
+    sw_all = [r for r in allrecs if r["role"] == "swarm" and r["round"] >= inject]
+    say("  Empty swarm reports, rounds 3-8 (whole reply empty + reply without a report section):")
+    for lab, lo, hi in [("seeds 0-9", 0, 9), ("seeds 10-19", 10, 19)]:
+        cells = sorted({(r["swarm_type"], r["n_advocates"]) for r in sw_all if lo <= r["seed"] <= hi},
+                       key=lambda c: (c[0] != "aligned", c[1]))
+        for c in cells:
+            v = [r for r in sw_all if (r["swarm_type"], r["n_advocates"]) == c and lo <= r["seed"] <= hi]
+            w, e = sum(map(whole_empty, v)), sum(map(any_empty, v))
+            say(f"    {lab:11s} {c[0]:9s} k={c[1]}: {e:3d}/{len(v)} ({e / len(v):.1%})  "
+                f"[whole reply empty {w}, no report section {e - w}]")
+
+    seeds = am.parse_seeds("0-9")
+    full, _ = am.load(MAIN, seeds)
+    qwen, _ = am.load(QWEN, seeds)
+    variants = [("as reported", lambda r: False), ("drop whole-empty replies", whole_empty),
+                ("drop all empty reports", any_empty)]
+    res = {}
+    for name, drop in variants:
+        E, _ = am.episode_means([r for r in full if not drop(r)], inject)
+        Q, _ = am.episode_means([r for r in qwen if not drop(r)], inject)
+        n = sum(1 for r in full if drop(r) and r["role"] == "swarm" and r["round"] >= inject)
+        res[name] = (E, Q, n)
+
+    def eff(E, s, k, m):
+        d = [E[(s, k, x)][m] - E[(s, 0, x)][m] for x in sorted(seeds)
+             if (s, k, x) in E and (s, 0, x) in E and m in E[(s, k, x)] and m in E[(s, 0, x)]]
+        return am.mse(d)[:2]
+
+    say("  Excluded swarm messages: " + ", ".join(f"{name}: {res[name][2]}" for name, _ in variants))
+    say("  Paired effect vs k=0 (mean ± SE): facts = fact coverage, all messages; candor = Qwen judge (Figure 1a)")
+    for s, ks in [("aligned", (1, 2, 3, 5, 7)), ("unaligned", (1, 3, 5))]:
+        for k in ks:
+            parts = []
+            for name, _ in variants:
+                E, Q, _ = res[name]
+                f, c = eff(E, s, k, "report_fact_coverage"), eff(Q, s, k, "candor")
+                parts.append(f"{name}: facts {f[0]:+.3f}±{f[1]:.3f} candor {c[0]:+.2f}±{c[1]:.2f}")
+            say(f"    {s:9s} k={k}: " + " | ".join(parts))
+    say("  H1 (drop at k=1, aligned minus unaligned):")
+    for name, _ in variants:
+        E, Q, _ = res[name]
+        for m, D, lab in [("report_fact_coverage", E, "facts"), ("candor", Q, "candor[Qwen]")]:
+            a, u = eff(D, "aligned", 1, m), eff(D, "unaligned", 1, m)
+            say(f"    {name:25s} {lab:13s} {a[0] - u[0]:+.3f} (SE {np.hypot(a[1], u[1]):.3f})")
+    say("  Aligned warning / pushback rates (per-episode mean):")
+    for k in (1, 2, 3, 5, 7):
+        say(f"    k={k}: " + " | ".join(
+            f"{name}: warn {np.nanmean([res[name][0][('aligned', k, x)].get('whistleblows', np.nan) for x in sorted(seeds)]):.3f} "
+            f"push {np.nanmean([res[name][0][('aligned', k, x)].get('pushback', np.nan) for x in sorted(seeds)]):.3f}"
+            for name, _ in variants))
+
+
 def main():
     say = Tee()
     say("EXPLORATORY FOLLOW-UPS (not pre-registered). Swarm agents, rounds 3-8. "
@@ -308,6 +375,7 @@ def main():
         f1(eps, range(10, 20), (1, 2, 5), say, " replication (new seeds)")
     f2(eps, say)
     f3(eps, say)
+    f4(say)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(say.lines) + "\n")
     print(f"\nwrote {OUT}")
